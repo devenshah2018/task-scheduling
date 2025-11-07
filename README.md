@@ -73,7 +73,7 @@ cpu-scheduling/
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/devenshah2018/task-scheduling.git
 cd cpu-scheduling
 
 # Build the project
@@ -123,16 +123,3 @@ logs/
 - `colored`: Terminal output formatting
 - `rayon`: Data parallelism
 - `crossbeam`: Lock-free data structures
-
-
-## Research Context
-
-This implementation supports research into:
-
-- **Operating Systems**: Modern scheduling algorithm development
-- **High-Performance Computing**: Optimal resource utilization strategies
-- **Machine Learning Systems**: AI workload-aware scheduling
-- **Computer Architecture**: CPU-GPU coordination mechanisms
-- **Distributed Systems**: Scalable scheduling for large-scale deployments
-
-The code provides a foundation for understanding how modern operating systems are adapting to meet the computational demands introduced by artificial intelligence and deep learning workloads.
