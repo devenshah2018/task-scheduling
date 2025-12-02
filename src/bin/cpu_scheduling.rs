@@ -3,7 +3,6 @@ use std::time::Duration;
 use colored::*;
 
 fn main() {
-    // Initialize logging
     let logger = DualLogger::new("cpu").expect("Failed to initialize logger");
     
     logger.log_both(&format!("{}\n", "🖥️  CPU SCHEDULING DEMONSTRATION".blue().bold()));
@@ -12,7 +11,6 @@ fn main() {
 
     let resources = ResourceConstraints::default();
     
-    // Create diverse workload tasks
     let tasks = create_sample_tasks();
     
     logger.log_both("📋 Sample Workload Tasks:\n");
@@ -22,7 +20,6 @@ fn main() {
             task.priority, task.memory_requirement));
     }
 
-    // Test different CPU scheduling algorithms
     run_cpu_scheduler_comparison(tasks, resources, &logger);
     
     let log_path = logger.finish();
@@ -68,12 +65,10 @@ fn run_cpu_scheduler_comparison(tasks: Vec<Task>, resources: ResourceConstraints
     for mut scheduler in schedulers {
         let scheduler_name = scheduler.name().to_string();
         
-        // Log scheduler start
         logger.log_both(&format!("\n{} Results:\n", scheduler_name.cyan().bold()));
         
         let metrics = scheduler.schedule_with_logger(tasks.clone(), Some(logger));
         
-        // Capture metrics summary for logging
         let summary = format!(
             "📊 Scheduling Metrics Summary\n\
              ════════════════════════════════\n\
@@ -98,10 +93,8 @@ fn run_cpu_scheduler_comparison(tasks: Vec<Task>, resources: ResourceConstraints
         all_metrics.push((scheduler_name, metrics));
     }
 
-    // Performance comparison
     logger.log_analysis("PERFORMANCE COMPARISON SUMMARY", "");
     
-    // Find best performers
     let best_throughput = all_metrics.iter()
         .max_by(|a, b| a.1.throughput.partial_cmp(&b.1.throughput).unwrap());
     let best_turnaround = all_metrics.iter()
@@ -132,7 +125,6 @@ fn run_cpu_scheduler_comparison(tasks: Vec<Task>, resources: ResourceConstraints
     
     logger.log_both(&comparison_summary);
 
-    // Analysis insights
     let insights = "\
 📈 RESEARCH INSIGHTS\n\
 ===================\n\

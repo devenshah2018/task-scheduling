@@ -22,8 +22,8 @@ pub struct Task {
     pub arrival_time: DateTime<Utc>,
     pub burst_time: Duration,
     pub priority: u8,
-    pub memory_requirement: usize, // MB
-    pub parallelism_factor: f32,   // How well it can be parallelized (0.0 - 1.0)
+    pub memory_requirement: usize,
+    pub parallelism_factor: f32,
     pub gpu_compatibility: bool,
     pub remaining_time: Duration,
     pub start_time: Option<DateTime<Utc>>,
@@ -81,7 +81,7 @@ pub struct SchedulingMetrics {
     pub completed_tasks: usize,
     pub average_turnaround_time: Duration,
     pub average_waiting_time: Duration,
-    pub throughput: f64, // tasks per second
+    pub throughput: f64,
     pub cpu_utilization: f64,
     pub gpu_utilization: Option<f64>,
     pub total_execution_time: Duration,
@@ -120,7 +120,6 @@ impl SchedulingMetrics {
             0.0
         };
 
-        // Calculate CPU utilization (simplified)
         let total_cpu_time: Duration = completed_tasks
             .iter()
             .map(|t| t.burst_time)
@@ -163,18 +162,18 @@ impl SchedulingMetrics {
 #[derive(Debug, Clone)]
 pub struct ResourceConstraints {
     pub cpu_cores: usize,
-    pub total_memory: usize, // MB
+    pub total_memory: usize,
     pub gpu_cores: Option<usize>,
-    pub gpu_memory: Option<usize>, // MB
+    pub gpu_memory: Option<usize>,
 }
 
 impl Default for ResourceConstraints {
     fn default() -> Self {
         Self {
             cpu_cores: 8,
-            total_memory: 16384, // 16GB
-            gpu_cores: Some(2048), // Simulated GPU cores
-            gpu_memory: Some(8192), // 8GB GPU memory
+            total_memory: 16384,
+            gpu_cores: Some(2048),
+            gpu_memory: Some(8192),
         }
     }
 }

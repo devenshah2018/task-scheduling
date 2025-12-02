@@ -62,7 +62,6 @@ impl WorkloadPredictor {
         let mut execution_history = HashMap::new();
         let mut accuracy_scores = HashMap::new();
 
-        // Initialize with educated estimates
         execution_history.insert(WorkloadType::AITraining, 
             (Duration::from_secs(10), Duration::from_secs(2)));
         execution_history.insert(WorkloadType::AIInference, 
@@ -76,7 +75,6 @@ impl WorkloadPredictor {
         execution_history.insert(WorkloadType::IOBound, 
             (Duration::from_secs(2), Duration::from_secs(10)));
 
-        // Initialize accuracy scores
         for workload_type in [
             WorkloadType::AITraining,
             WorkloadType::AIInference,
@@ -108,14 +106,12 @@ impl WorkloadPredictor {
                 ProcessingUnit::CPU(0) // Simplified - use first CPU
             }
         } else {
-            // Default to CPU for unknown workloads
             ProcessingUnit::CPU(0)
         }
     }
 
     pub fn update_history(&mut self, workload_type: WorkloadType, cpu_time: Duration, gpu_time: Duration) {
         if let Some((avg_cpu, avg_gpu)) = self.execution_history.get_mut(&workload_type) {
-            // Exponential moving average
             *avg_cpu = Duration::from_secs_f32(avg_cpu.as_secs_f32() * 0.8 + cpu_time.as_secs_f32() * 0.2);
             *avg_gpu = Duration::from_secs_f32(avg_gpu.as_secs_f32() * 0.8 + gpu_time.as_secs_f32() * 0.2);
         }
@@ -143,7 +139,6 @@ impl LoadBalancer {
         match current_unit {
             ProcessingUnit::CPU(core_id) => {
                 if self.cpu_utilization[*core_id] > self.migration_threshold {
-                    // Find less utilized GPU
                     let min_gpu_idx = self.gpu_utilization.iter()
                         .enumerate()
                         .min_by(|a, b| a.1.partial_cmp(b.1).unwrap())
@@ -156,7 +151,6 @@ impl LoadBalancer {
             },
             ProcessingUnit::GPU(gpu_id) => {
                 if self.gpu_utilization[*gpu_id] > self.migration_threshold {
-                    // Find less utilized CPU
                     let min_cpu_idx = self.cpu_utilization.iter()
                         .enumerate()
                         .min_by(|a, b| a.1.partial_cmp(b.1).unwrap())
@@ -202,11 +196,11 @@ impl LoadBalancer {
 impl HybridScheduler {
     pub fn new(resources: ResourceConstraints) -> Self {
         let cpu_cores = resources.cpu_cores;
-        let gpu_count = 1; // Simplified to 1 GPU
+        let gpu_count = 1;
         
         let mut sms = Vec::new();
         if resources.gpu_cores.is_some() {
-            for i in 0..4 { // 4 SMs per GPU (simplified)
+            for i in 0..4 {
                 sms.push(StreamingMultiprocessor::new(i as u32));
             }
         }
@@ -224,22 +218,22 @@ impl HybridScheduler {
     pub fn create_hybrid_task(&self, task: Task) -> HybridTask {
         let (cpu_time, gpu_time) = match task.workload_type {
             WorkloadType::AITraining => {
-                (task.burst_time * 3, task.burst_time) // GPU is much faster for AI training
+                (task.burst_time * 3, task.burst_time)
             },
             WorkloadType::AIInference => {
-                (task.burst_time * 5, task.burst_time) // GPU is even faster for inference
+                (task.burst_time * 5, task.burst_time)
             },
             WorkloadType::TensorOperation => {
-                (task.burst_time * 2, task.burst_time) // GPU advantage for tensor ops
+                (task.burst_time * 2, task.burst_time)
             },
             WorkloadType::GeneralCompute => {
-                (task.burst_time, task.burst_time * 2) // CPU better for general compute
+                (task.burst_time, task.burst_time * 2)
             },
             WorkloadType::MemoryIntensive => {
-                (task.burst_time, task.burst_time * 3) // CPU better for memory-intensive
+                (task.burst_time, task.burst_time * 3)
             },
             WorkloadType::IOBound => {
-                (task.burst_time, task.burst_time * 5) // CPU much better for I/O
+                (task.burst_time, task.burst_time * 5)
             },
         };
 
@@ -252,18 +246,16 @@ impl HybridScheduler {
             gpu_execution_time: gpu_time,
             cpu_gpu_affinity: affinity,
             data_transfer_overhead: data_transfer,
-            memory_locality: MemoryLocality::CPUMemory, // Default
+            memory_locality: MemoryLocality::CPUMemory,
         }
     }
 
     fn execute_on_cpu(&mut self, task: &mut HybridTask, core_id: usize) -> Duration {
         println!("    🖥️  Executing task {} on CPU core {}", task.base_task.id, core_id);
         
-        // Simulate CPU execution
         let execution_time = task.cpu_execution_time;
         std::thread::sleep(Duration::from_millis(80));
         
-        // Update utilization
         let new_utilization = (self.load_balancer.cpu_utilization[core_id] + 0.4).min(1.0);
         self.load_balancer.update_utilization(&ProcessingUnit::CPU(core_id), new_utilization);
         
@@ -273,14 +265,12 @@ impl HybridScheduler {
     fn execute_on_gpu(&mut self, task: &mut HybridTask, sm_id: usize) -> Duration {
         println!("    🎮 Executing task {} on GPU SM {}", task.base_task.id, sm_id);
         
-        let mut total_time = task.data_transfer_overhead; // Data transfer time
+        let mut total_time = task.data_transfer_overhead;
         
-        // Add GPU kernel execution time
         total_time += task.gpu_execution_time;
         
         std::thread::sleep(Duration::from_millis(100));
         
-        // Update GPU utilization
         if sm_id < self.streaming_multiprocessors.len() {
             self.streaming_multiprocessors[sm_id].utilization = 
                 (self.streaming_multiprocessors[sm_id].utilization + 0.5).min(1.0);
@@ -293,13 +283,11 @@ impl HybridScheduler {
     }
 
     fn should_migrate_task(&mut self, task: &HybridTask, current_unit: &ProcessingUnit) -> Option<ProcessingUnit> {
-        // Check load balancing
         if let Some(better_unit) = self.load_balancer.should_migrate(current_unit) {
             println!("    🔄 Load balancer suggests migration from {:?} to {:?}", current_unit, better_unit);
             return Some(better_unit);
         }
 
-        // Check if predicted unit is significantly better
         let predicted_unit = self.workload_predictor.predict_optimal_unit(task);
         if predicted_unit != *current_unit {
             match (&predicted_unit, current_unit) {
@@ -335,7 +323,6 @@ impl HybridScheduler {
         
         println!("  📊 Created {} hybrid tasks", hybrid_tasks.len());
         
-        // Initial placement prediction
         let task_placements: Vec<ProcessingUnit> = hybrid_tasks.iter()
             .map(|t| self.workload_predictor.predict_optimal_unit(t))
             .collect();
@@ -343,22 +330,19 @@ impl HybridScheduler {
         println!("  🎯 Initial Placement Predictions:");
         for (task, placement) in hybrid_tasks.iter().zip(task_placements.iter()) {
             println!("    Task {} ({:?}): {:?}", 
-                task.base_task.id, task.base_task.workload_type, placement);
+                task.base_task.id,                 task.base_task.workload_type, placement);
         }
         
-        // Execute tasks with dynamic migration
         for (i, task) in hybrid_tasks.iter_mut().enumerate() {
             task.base_task.start_time = Some(Utc::now());
             
             let mut current_placement = task_placements[i].clone();
             
-            // Check for potential migration before execution
             if let Some(better_placement) = self.should_migrate_task(task, &current_placement) {
                 current_placement = better_placement;
                 println!("  🔄 Migrating task {} to {:?}", task.base_task.id, current_placement);
             }
             
-            // Execute on assigned unit
             let execution_time = match current_placement {
                 ProcessingUnit::CPU(core_id) => {
                     self.execute_on_cpu(task, core_id)
@@ -374,7 +358,6 @@ impl HybridScheduler {
             println!("    ✅ Task {} completed in {:.2}s on {:?}", 
                 task.base_task.id, execution_time.as_secs_f64(), current_placement);
             
-            // Update workload predictor with actual execution results
             self.workload_predictor.update_history(
                 task.base_task.workload_type.clone(),
                 task.cpu_execution_time,
@@ -384,12 +367,10 @@ impl HybridScheduler {
         
         let end_time = Instant::now();
         
-        // Print load balancing statistics
         println!("\n  📈 Final System Utilization:");
         println!("    CPU: {:.1}%", self.load_balancer.get_overall_cpu_utilization() * 100.0);
         println!("    GPU: {:.1}%", self.load_balancer.get_overall_gpu_utilization() * 100.0);
         
-        // Convert back to tasks for metrics calculation
         let completed_tasks: Vec<Task> = hybrid_tasks.into_iter()
             .map(|ht| ht.base_task)
             .collect();
@@ -419,8 +400,8 @@ pub struct TaskSplitter {
 impl TaskSplitter {
     pub fn new() -> Self {
         Self {
-            split_threshold: Duration::from_secs(5), // Split tasks longer than 5 seconds
-            cpu_gpu_ratio: 0.3, // 30% CPU, 70% GPU for AI workloads
+            split_threshold: Duration::from_secs(5),
+            cpu_gpu_ratio: 0.3,
         }
     }
 
@@ -431,32 +412,30 @@ impl TaskSplitter {
     }
 
     pub fn split_task(&self, task: &Task) -> (Task, Kernel) {
-        // Create CPU component (data preprocessing, coordination)
         let cpu_component = Task::new(
-            task.id * 1000, // Unique ID for CPU component
+            task.id * 1000,
             format!("{}_cpu", task.name),
             WorkloadType::GeneralCompute,
             Duration::from_secs_f64(task.burst_time.as_secs_f64() * self.cpu_gpu_ratio as f64),
             task.priority,
             task.memory_requirement / 2,
-            0.2, // Lower parallelism for CPU coordination tasks
+            0.2,
             false,
         );
 
-        // Create GPU component (main computation)
         let gpu_component = Kernel {
             id: task.id * 1000 + 1,
             name: format!("{}_gpu", task.name),
             task_id: task.id,
-            grid_size: (64, 64, 1),   // Large grid for AI workloads
-            block_size: (256, 1, 1),  // Typical block size
-            shared_memory_size: 48 * 1024, // 48KB
+            grid_size: (64, 64, 1),
+            block_size: (256, 1, 1),
+            shared_memory_size: 48 * 1024,
             registers_per_thread: 32,
             priority: task.priority,
             estimated_execution_time: Duration::from_secs_f64(
                 task.burst_time.as_secs_f64() * (1.0 - self.cpu_gpu_ratio as f64)
             ),
-            memory_requirements: (task.memory_requirement * 1024 * 1024) / 2, // Convert to bytes
+            memory_requirements: (task.memory_requirement * 1024 * 1024) / 2,
             workload_type: task.workload_type.clone(),
         };
 

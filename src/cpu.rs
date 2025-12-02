@@ -10,7 +10,6 @@ use colored::*;
 pub trait CPUScheduler {
     fn schedule(&mut self, tasks: Vec<Task>) -> SchedulingMetrics;
     fn schedule_with_logger(&mut self, tasks: Vec<Task>, logger: Option<&DualLogger>) -> SchedulingMetrics {
-        // Default implementation calls the original schedule method
         self.schedule(tasks)
     }
     fn name(&self) -> &str;
@@ -47,7 +46,6 @@ impl CPUScheduler for FCFSScheduler {
         let start_time = Instant::now();
         let mut current_time = start_time;
         
-        // Sort by arrival time
         tasks.sort_by_key(|t| t.arrival_time);
         
         for task in &mut tasks {
@@ -61,8 +59,7 @@ impl CPUScheduler for FCFSScheduler {
                 None => print!("{}", exec_msg),
             }
             
-            // Simulate execution
-            std::thread::sleep(Duration::from_millis(100)); // Reduced for demo
+            std::thread::sleep(Duration::from_millis(100));
             current_time += task.burst_time;
             
             task.completion_time = Some(Utc::now());
@@ -127,8 +124,7 @@ impl CPUScheduler for RoundRobinScheduler {
                 None => print!("{}", exec_msg),
             }
             
-            // Simulate execution
-            std::thread::sleep(Duration::from_millis(50)); // Reduced for demo
+            std::thread::sleep(Duration::from_millis(50));
             current_time += execution_time;
             task.remaining_time -= execution_time;
             
@@ -164,7 +160,7 @@ struct SJFTask {
 
 impl Ord for SJFTask {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.remaining_time.cmp(&self.remaining_time) // Min-heap
+        other.remaining_time.cmp(&self.remaining_time)
     }
 }
 
@@ -199,7 +195,6 @@ impl CPUScheduler for SJFScheduler {
         let mut current_time = start_time;
         
         if !self.preemptive {
-            // Non-preemptive SJF
             tasks.sort_by_key(|t| t.burst_time);
             
             for task in &mut tasks {
@@ -220,7 +215,6 @@ impl CPUScheduler for SJFScheduler {
                 task.remaining_time = Duration::ZERO;
             }
         } else {
-            // Preemptive SRTF
             let mut ready_queue = BinaryHeap::new();
             for (i, _) in tasks.iter().enumerate() {
                 ready_queue.push(SJFTask {
@@ -327,7 +321,6 @@ impl CPUScheduler for PriorityScheduler {
         let mut current_time = start_time;
         
         if !self.preemptive {
-            // Sort by priority (higher number = higher priority)
             tasks.sort_by(|a, b| b.priority.cmp(&a.priority));
             
             for task in &mut tasks {
@@ -348,7 +341,6 @@ impl CPUScheduler for PriorityScheduler {
                 task.remaining_time = Duration::ZERO;
             }
         } else {
-            // Preemptive priority scheduling
             let mut ready_queue = BinaryHeap::new();
             for (i, task) in tasks.iter().enumerate() {
                 ready_queue.push(PriorityTask {
@@ -440,7 +432,6 @@ impl CPUScheduler for MLFQScheduler {
         
         let mut queues: Vec<VecDeque<usize>> = vec![VecDeque::new(); self.queue_count];
         
-        // Initially, all tasks go to the highest priority queue (queue 0)
         for i in 0..tasks.len() {
             queues[0].push_back(i);
         }
@@ -470,14 +461,13 @@ impl CPUScheduler for MLFQScheduler {
                     task.remaining_time -= execution_time;
                     
                     if task.remaining_time > Duration::ZERO {
-                        // Move to lower priority queue if not the lowest
                         let next_queue = (queue_level + 1).min(self.queue_count - 1);
                         queues[next_queue].push_back(task_idx);
                     } else {
                         task.completion_time = Some(Utc::now());
                     }
                     
-                    break; // Process one task per iteration to maintain priority
+                    break;
                 }
             }
         }

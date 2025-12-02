@@ -3,7 +3,6 @@ use std::time::Duration;
 use colored::*;
 
 fn main() {
-    // Initialize logging
     let logger = DualLogger::new("hybrid").expect("Failed to initialize logger");
     
     logger.log_both(&format!("{}\n", "🔀 HYBRID CPU-GPU SCHEDULING DEMONSTRATION".cyan().bold()));
@@ -12,7 +11,6 @@ fn main() {
 
     let resources = ResourceConstraints::default();
     
-    // Create mixed workload representing modern AI pipeline
     let tasks = create_ai_pipeline_tasks();
     
     logger.log_both("🧠 AI Pipeline Tasks:\n");
@@ -23,7 +21,6 @@ fn main() {
         logger.log_both(&format!("    Parallelism Factor: {:.1}\n", task.parallelism_factor));
     }
 
-    // Demonstrate hybrid scheduling approaches
     run_hybrid_scheduling_demonstration(tasks, resources, &logger);
     
     let log_path = logger.finish();
@@ -32,51 +29,28 @@ fn main() {
 
 fn create_ai_pipeline_tasks() -> Vec<Task> {
     vec![
-        // Data preprocessing (CPU-friendly)
         Task::new(1, "Data Loading".to_string(), WorkloadType::IOBound, 
                  Duration::from_secs(2), 2, 512, 0.1, false),
-        
-        // Data augmentation (can be GPU accelerated)
         Task::new(2, "Data Augmentation".to_string(), WorkloadType::TensorOperation, 
                  Duration::from_secs(3), 4, 1024, 0.8, true),
-        
-        // Model initialization (CPU task)
         Task::new(3, "Model Initialization".to_string(), WorkloadType::GeneralCompute, 
                  Duration::from_secs(1), 3, 256, 0.2, false),
-        
-        // Forward pass (GPU-optimized)
         Task::new(4, "Forward Pass".to_string(), WorkloadType::AITraining, 
                  Duration::from_secs(8), 8, 3072, 0.95, true),
-        
-        // Loss computation (mixed CPU-GPU)
         Task::new(5, "Loss Computation".to_string(), WorkloadType::TensorOperation, 
                  Duration::from_secs(2), 6, 512, 0.7, true),
-        
-        // Backward pass (GPU-intensive)
         Task::new(6, "Backward Pass".to_string(), WorkloadType::AITraining, 
                  Duration::from_secs(12), 9, 4096, 0.9, true),
-        
-        // Gradient aggregation (CPU coordination + GPU compute)
         Task::new(7, "Gradient Aggregation".to_string(), WorkloadType::TensorOperation, 
                  Duration::from_secs(4), 7, 2048, 0.6, true),
-        
-        // Parameter update (CPU-GPU coordination)
         Task::new(8, "Parameter Update".to_string(), WorkloadType::AITraining, 
                  Duration::from_secs(3), 5, 1024, 0.4, true),
-        
-        // Model validation (inference workload)
         Task::new(9, "Model Validation".to_string(), WorkloadType::AIInference, 
                  Duration::from_secs(5), 6, 1536, 0.8, true),
-        
-        // Checkpoint saving (I/O intensive)
         Task::new(10, "Checkpoint Save".to_string(), WorkloadType::IOBound, 
                  Duration::from_secs(3), 2, 2048, 0.1, false),
-        
-        // Memory management (system task)
         Task::new(11, "Memory Cleanup".to_string(), WorkloadType::MemoryIntensive, 
                  Duration::from_secs(2), 1, 128, 0.2, false),
-        
-        // Distributed communication (network I/O)
         Task::new(12, "All-Reduce Communication".to_string(), WorkloadType::IOBound, 
                  Duration::from_secs(6), 4, 1024, 0.3, false),
     ]
@@ -85,14 +59,12 @@ fn create_ai_pipeline_tasks() -> Vec<Task> {
 fn run_hybrid_scheduling_demonstration(tasks: Vec<Task>, resources: ResourceConstraints, logger: &DualLogger) {
     logger.log_analysis("HYBRID SCHEDULING STRATEGIES", "");
 
-    // Strategy 1: Intelligent Hybrid Scheduler
     let mut hybrid_scheduler = HybridScheduler::new(resources.clone());
     
     logger.log_both(&format!("\n🎯 Strategy 1: Intelligent Hybrid Scheduling\n"));
     logger.log_both("─────────────────────────────────────────\n");
     let hybrid_metrics = hybrid_scheduler.schedule_hybrid_tasks(tasks.clone());
     
-    // Log hybrid metrics summary
     let hybrid_summary = format!(
         "📊 Hybrid Scheduling Metrics Summary\n\
          ═══════════════════════════════════\n\
@@ -111,32 +83,26 @@ fn run_hybrid_scheduling_demonstration(tasks: Vec<Task>, resources: ResourceCons
     );
     logger.log_both(&hybrid_summary);
 
-    // Strategy 2: CPU-only baseline for comparison
     logger.log_both(&format!("\n📊 Strategy 2: CPU-Only Baseline (for comparison)\n"));
     logger.log_both("────────────────────────────────────────────────\n");
     let mut cpu_scheduler = RoundRobinScheduler::new(resources.clone(), Duration::from_millis(500));
     let cpu_metrics = cpu_scheduler.schedule_with_logger(tasks.clone(), Some(logger));
     
-    // Strategy 3: GPU-priority approach
     logger.log_both(&format!("\n🎮 Strategy 3: GPU-Priority Approach\n"));
     logger.log_both("───────────────────────────────────\n");
     demonstrate_gpu_priority_scheduling(tasks.clone(), resources.clone(), logger);
 
-    // Comparative analysis
     perform_hybrid_analysis(&hybrid_metrics, &cpu_metrics, logger);
     
-    // Advanced scheduling insights
     provide_advanced_insights(logger);
 }
 
 fn demonstrate_gpu_priority_scheduling(tasks: Vec<Task>, resources: ResourceConstraints, logger: &DualLogger) {
-    // Simulate a scheduler that prioritizes GPU-compatible tasks
     let mut gpu_tasks = Vec::new();
     let mut cpu_tasks = Vec::new();
     
     for task in tasks {
         if task.gpu_compatibility && task.parallelism_factor > 0.5 {
-            // Convert compatible tasks to GPU kernels
             let kernel = Kernel {
                 id: task.id * 10,
                 name: task.name.clone(),
@@ -166,7 +132,6 @@ fn demonstrate_gpu_priority_scheduling(tasks: Vec<Task>, resources: ResourceCons
     logger.log_both(&format!("  🎮 GPU Tasks: {} kernels\n", gpu_tasks.len()));
     logger.log_both(&format!("  🖥️  CPU Tasks: {} processes\n", cpu_tasks.len()));
     
-    // Schedule GPU tasks
     if !gpu_tasks.is_empty() {
         let mut gpu_scheduler = DynamicPriorityGPUScheduler::new(resources.clone(), 4);
         let gpu_metrics = gpu_scheduler.schedule_kernels_with_logger(gpu_tasks, Some(logger));
@@ -187,7 +152,6 @@ fn demonstrate_gpu_priority_scheduling(tasks: Vec<Task>, resources: ResourceCons
         logger.log_both(&gpu_summary);
     }
     
-    // Schedule remaining CPU tasks
     if !cpu_tasks.is_empty() {
         let mut cpu_scheduler = PriorityScheduler::new(resources, true);
         let cpu_metrics = cpu_scheduler.schedule_with_logger(cpu_tasks, Some(logger));
@@ -230,7 +194,6 @@ fn perform_hybrid_analysis(hybrid_metrics: &SchedulingMetrics, cpu_metrics: &Sch
             (gpu_util + hybrid_metrics.cpu_utilization) / 2.0));
     }
     
-    // Analyze workload distribution efficiency
     analysis.push_str("\n📊 Workload Distribution Analysis:\n");
     analysis.push_str("  • AI Training tasks benefit most from GPU acceleration (3-5x speedup)\n");
     analysis.push_str("  • Inference tasks show excellent GPU performance with low latency\n");

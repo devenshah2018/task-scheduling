@@ -1,6 +1,3 @@
-// CPU and GPU Scheduling Library
-// Research Supplemental Code for CPU-GPU Scheduling Analysis
-
 pub mod cpu;
 pub mod gpu;
 pub mod hybrid;

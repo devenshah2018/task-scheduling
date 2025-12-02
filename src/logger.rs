@@ -15,10 +15,8 @@ impl DualLogger {
         let timestamp = Local::now().format("%Y%m%d_%H%M%S");
         let log_dir = PathBuf::from("logs").join(format!("{}_{}", demo_type, timestamp));
         
-        // Create the directory
         fs::create_dir_all(&log_dir)?;
         
-        // Create log files
         let full_log_path = log_dir.join("full.log");
         let simple_log_path = log_dir.join("simple.log");
         
@@ -37,12 +35,10 @@ impl DualLogger {
         let full_writer = Arc::new(Mutex::new(BufWriter::new(full_file)));
         let simple_writer = Arc::new(Mutex::new(BufWriter::new(simple_file)));
         
-        // Write headers
         let timestamp_str = Local::now().format("%Y-%m-%d %H:%M:%S");
         let header = format!("=== {} SCHEDULING DEMONSTRATION LOG ===\n", demo_type.to_uppercase());
         let time_header = format!("Started at: {}\n\n", timestamp_str);
         
-        // Write to both files
         if let Ok(mut writer) = full_writer.lock() {
             let _ = writer.write_all(header.as_bytes());
             let _ = writer.write_all(time_header.as_bytes());
@@ -68,17 +64,14 @@ impl DualLogger {
         let clean_message = Self::strip_color_codes(message);
         let clean_timestamped = format!("[{}] {}\n", Local::now().format("%H:%M:%S"), clean_message);
         
-        // Print to console
         print!("{}", message);
         io::stdout().flush().unwrap_or(());
         
-        // Write to full log (with colors)
         if let Ok(mut writer) = self.full_writer.lock() {
             let _ = writer.write_all(timestamped.as_bytes());
             let _ = writer.flush();
         }
         
-        // Write to simple log (without colors)
         if let Ok(mut writer) = self.simple_writer.lock() {
             let _ = writer.write_all(clean_timestamped.as_bytes());
             let _ = writer.flush();
@@ -89,11 +82,9 @@ impl DualLogger {
     pub fn log_full_only(&self, message: &str) {
         let timestamped = format!("[{}] {}\n", Local::now().format("%H:%M:%S"), message);
         
-        // Print to console
         print!("{}", message);
         io::stdout().flush().unwrap_or(());
         
-        // Write only to full log
         if let Ok(mut writer) = self.full_writer.lock() {
             let _ = writer.write_all(timestamped.as_bytes());
             let _ = writer.flush();
@@ -118,11 +109,9 @@ impl DualLogger {
             "=".repeat(title.len() + 4)
         );
         
-        // Print to console with colors
         print!("{}", content);
         io::stdout().flush().unwrap_or(());
         
-        // Write formatted analysis to both logs
         let analysis_content = format!("{}{}\n", formatted, content);
         let clean_content = Self::strip_color_codes(content);
         let clean_analysis = format!("{}{}\n", formatted, clean_content);
@@ -133,7 +122,6 @@ impl DualLogger {
             let _ = writer.flush();
         }
         
-        // Simple log gets clean version
         if let Ok(mut writer) = self.simple_writer.lock() {
             let _ = writer.write_all(clean_analysis.as_bytes());
             let _ = writer.flush();
@@ -142,17 +130,15 @@ impl DualLogger {
     
     /// Strip ANSI color codes from text
     fn strip_color_codes(text: &str) -> String {
-        // Simple regex-like approach to remove ANSI escape sequences
         let mut result = String::new();
         let mut chars = text.chars().peekable();
         
         while let Some(ch) = chars.next() {
             if ch == '\x1b' && chars.peek() == Some(&'[') {
-                // Skip the escape sequence
-                chars.next(); // consume '['
+                chars.next();
                 while let Some(c) = chars.next() {
                     if c.is_ascii_alphabetic() {
-                        break; // End of escape sequence
+                        break;
                     }
                 }
             } else {

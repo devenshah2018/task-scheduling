@@ -4,7 +4,6 @@ use colored::*;
 use rand::Rng;
 
 fn main() {
-    // Initialize logging
     let logger = DualLogger::new("benchmark").expect("Failed to initialize logger");
     
     logger.log_both(&format!("{}\n", "📊 COMPREHENSIVE SCHEDULING BENCHMARK".purple().bold()));
@@ -13,7 +12,6 @@ fn main() {
 
     let resources = ResourceConstraints::default();
     
-    // Run comprehensive benchmarks
     run_comprehensive_benchmark(resources, &logger);
     
     let log_path = logger.finish();
@@ -23,16 +21,9 @@ fn main() {
 fn run_comprehensive_benchmark(resources: ResourceConstraints, logger: &DualLogger) {
     logger.log_analysis("BENCHMARK TEST SUITES", "");
     
-    // Test Suite 1: Varying workload sizes
     benchmark_workload_scaling(resources.clone(), logger);
-    
-    // Test Suite 2: Different workload compositions
     benchmark_workload_composition(resources.clone(), logger);
-    
-    // Test Suite 3: Resource constraint impact
     benchmark_resource_constraints(resources.clone(), logger);
-    
-    // Test Suite 4: AI-specific workload analysis
     benchmark_ai_workloads(resources, logger);
 }
 
@@ -46,19 +37,16 @@ fn benchmark_workload_scaling(resources: ResourceConstraints, logger: &DualLogge
         
         let tasks = generate_random_tasks(size);
         
-        // CPU scheduling baseline
         let mut cpu_scheduler = RoundRobinScheduler::new(resources.clone(), Duration::from_millis(300));
         let start_time = Instant::now();
         let cpu_metrics = cpu_scheduler.schedule_with_logger(tasks.clone(), Some(logger));
         let cpu_duration = start_time.elapsed();
         
-        // Hybrid scheduling
         let mut hybrid_scheduler = HybridScheduler::new(resources.clone());
         let start_time = Instant::now();
         let hybrid_metrics = hybrid_scheduler.schedule_hybrid_tasks(tasks);
         let hybrid_duration = start_time.elapsed();
         
-        // Performance comparison
         let throughput_improvement = ((hybrid_metrics.throughput - cpu_metrics.throughput) 
             / cpu_metrics.throughput) * 100.0;
         let scheduling_overhead = hybrid_duration.as_secs_f64() / cpu_duration.as_secs_f64();
@@ -94,10 +82,8 @@ fn benchmark_workload_composition(resources: ResourceConstraints, logger: &DualL
         
         let tasks = generate_composed_workload(20, ai_ratio, tensor_ratio, general_ratio);
         
-        // Test different schedulers
         let schedulers_results = test_multiple_schedulers(tasks, resources.clone(), logger);
         
-        // Find best performer for this composition
         let best_scheduler = schedulers_results.iter()
             .max_by(|a, b| a.1.throughput.partial_cmp(&b.1.throughput).unwrap())
             .unwrap();
@@ -105,7 +91,6 @@ fn benchmark_workload_composition(resources: ResourceConstraints, logger: &DualL
         logger.log_both(&format!("  Best Scheduler: {} ({:.2} tasks/sec)\n", 
             best_scheduler.0.green().bold(), best_scheduler.1.throughput));
         
-        // Analyze why this scheduler performed best
         analyze_composition_performance(name, &schedulers_results, logger);
     }
 }
@@ -179,14 +164,11 @@ fn benchmark_ai_workloads(resources: ResourceConstraints, logger: &DualLogger) {
     for (scenario_name, tasks) in ai_scenarios {
         logger.log_both(&format!("\n🎯 {} Scenario:\n", scenario_name));
         
-        // Test hybrid scheduling
         let mut hybrid_scheduler = HybridScheduler::new(resources.clone());
         let hybrid_metrics = hybrid_scheduler.schedule_hybrid_tasks(tasks.clone());
         
-        // Test GPU-priority approach
         let gpu_metrics = test_gpu_priority_approach(tasks.clone(), resources.clone(), logger);
         
-        // Test CPU baseline
         let mut cpu_scheduler = PriorityScheduler::new(resources.clone(), true);
         let cpu_metrics = cpu_scheduler.schedule_with_logger(tasks, Some(logger));
         
@@ -204,7 +186,6 @@ fn benchmark_ai_workloads(resources: ResourceConstraints, logger: &DualLogger) {
             / cpu_metrics.throughput) * 100.0;
         logger.log_both(&format!("  Improvement:          {:.1}% over CPU-only\n", improvement));
         
-        // Scenario-specific insights
         provide_scenario_insights(scenario_name, improvement, logger);
     }
 }
@@ -253,7 +234,6 @@ fn generate_composed_workload(count: usize, ai_ratio: f32, tensor_ratio: f32, ge
     let tensor_count = (count as f32 * tensor_ratio) as usize;
     let general_count = count - ai_count - tensor_count;
     
-    // AI tasks
     for i in 0..ai_count {
         let workload_type = if rng.gen_bool(0.6) { 
             WorkloadType::AITraining 
@@ -272,7 +252,6 @@ fn generate_composed_workload(count: usize, ai_ratio: f32, tensor_ratio: f32, ge
         ));
     }
     
-    // Tensor tasks
     for i in 0..tensor_count {
         tasks.push(Task::new(
             (ai_count + i) as u32 + 1,
@@ -286,7 +265,6 @@ fn generate_composed_workload(count: usize, ai_ratio: f32, tensor_ratio: f32, ge
         ));
     }
     
-    // General tasks
     for i in 0..general_count {
         let workload_type = if rng.gen_bool(0.5) { 
             WorkloadType::GeneralCompute 
@@ -389,7 +367,6 @@ fn generate_mlops_workload() -> Vec<Task> {
 fn test_multiple_schedulers(tasks: Vec<Task>, resources: ResourceConstraints, logger: &DualLogger) -> Vec<(String, SchedulingMetrics)> {
     let mut results = Vec::new();
     
-    // CPU schedulers
     let mut fcfs = FCFSScheduler::new(resources.clone());
     results.push(("FCFS".to_string(), fcfs.schedule_with_logger(tasks.clone(), Some(logger))));
     
@@ -399,7 +376,6 @@ fn test_multiple_schedulers(tasks: Vec<Task>, resources: ResourceConstraints, lo
     let mut priority = PriorityScheduler::new(resources.clone(), true);
     results.push(("Priority".to_string(), priority.schedule_with_logger(tasks.clone(), Some(logger))));
     
-    // Hybrid scheduler
     let mut hybrid = HybridScheduler::new(resources);
     results.push(("Hybrid".to_string(), hybrid.schedule_hybrid_tasks(tasks)));
     
@@ -407,13 +383,12 @@ fn test_multiple_schedulers(tasks: Vec<Task>, resources: ResourceConstraints, lo
 }
 
 fn test_gpu_priority_approach(tasks: Vec<Task>, resources: ResourceConstraints, logger: &DualLogger) -> f64 {
-    // Simplified GPU-priority scheduling simulation
     let gpu_compatible_count = tasks.iter().filter(|t| t.gpu_compatibility).count();
     logger.log_full_only(&format!("GPU-compatible tasks: {}/{}", gpu_compatible_count, tasks.len()));
     
     let total_time: Duration = tasks.iter()
         .map(|t| if t.gpu_compatibility { 
-            Duration::from_secs_f64(t.burst_time.as_secs_f64() / 3.0) // GPU speedup
+            Duration::from_secs_f64(t.burst_time.as_secs_f64() / 3.0)
         } else { 
             t.burst_time 
         })

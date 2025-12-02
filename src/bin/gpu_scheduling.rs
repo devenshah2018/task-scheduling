@@ -3,7 +3,6 @@ use std::time::Duration;
 use colored::*;
 
 fn main() {
-    // Initialize logging
     let logger = DualLogger::new("gpu").expect("Failed to initialize logger");
     
     logger.log_both(&format!("{}\n", "🎮 GPU SCHEDULING DEMONSTRATION".green().bold()));
@@ -12,7 +11,6 @@ fn main() {
 
     let resources = ResourceConstraints::default();
     
-    // Create GPU kernels representing different AI workloads
     let kernels = create_ai_workload_kernels();
     
     logger.log_both("🧠 AI Workload Kernels:\n");
@@ -25,7 +23,6 @@ fn main() {
             kernel.estimated_execution_time.as_secs_f64()));
     }
 
-    // Test different GPU scheduling approaches
     run_gpu_scheduler_comparison(kernels, resources, &logger);
     
     let log_path = logger.finish();
@@ -161,7 +158,6 @@ fn run_gpu_scheduler_comparison(kernels: Vec<Kernel>, resources: ResourceConstra
         
         let metrics = scheduler.schedule_kernels_with_logger(kernels.clone(), Some(logger));
         
-        // Capture metrics summary for logging
         let summary = format!(
             "📊 GPU Scheduling Metrics Summary\n\
              ═══════════════════════════════════\n\
@@ -183,7 +179,6 @@ fn run_gpu_scheduler_comparison(kernels: Vec<Kernel>, resources: ResourceConstra
         all_metrics.push((scheduler_name, metrics));
     }
 
-    // GPU-specific performance analysis
     logger.log_analysis("GPU SCHEDULING PERFORMANCE ANALYSIS", "");
     
     let best_gpu_utilization = all_metrics.iter()
@@ -208,10 +203,8 @@ fn run_gpu_scheduler_comparison(kernels: Vec<Kernel>, resources: ResourceConstra
     
     logger.log_both(&performance_summary);
 
-    // Analyze warp scheduling efficiency
     analyze_warp_scheduling_impact(&all_metrics, logger);
     
-    // GPU architecture insights
     let insights = "\
 🔬 GPU ARCHITECTURE INSIGHTS\n\
 ============================\n\
@@ -226,7 +219,6 @@ fn run_gpu_scheduler_comparison(kernels: Vec<Kernel>, resources: ResourceConstra
     
     logger.log_analysis("GPU ARCHITECTURE INSIGHTS", insights);
 
-    // AI workload specific insights
     let ai_insights = "\
 🧠 AI WORKLOAD SCHEDULING INSIGHTS\n\
 ==================================\n\
